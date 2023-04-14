@@ -8,7 +8,7 @@ use Term::ANSIScreen qw(cls);
 
 my $FileEditor = "/bin/nano";
 my $CROSSFIREDIR = "/home/crossfire/crossfire-startup";
-my $BackupCommand = "/home/crossfire/CrossfireBackup/crossfirebackup.pl";
+my $BackupCommand = "/home/crossfire/crossfire-backup/crossfirebackup.pl";
 
 ###################################################
 # No changes below here
