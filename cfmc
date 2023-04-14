@@ -1,0 +1,116 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+use UI::Dialog;
+use Term::ReadKey;
+use Term::ANSIScreen qw(cls);
+
+my $FileEditor = "/bin/nano";
+my $CROSSFIREDIR = "/home/crossfire/crossfire-startup";
+my $BackupCommand = "/home/crossfire/CrossfireBackup/crossfirebackup.pl";
+
+###################################################
+# No changes below here
+###################################################
+
+my $MMC_ver = "1.0.0";
+my $ServerStatus = "foo";
+
+my $d = new UI::Dialog ( backtitle => "Crossfire Server Management Console v$MMC_ver", height => 20, width => 65, listheight => 5,
+	order => [ 'ascii', 'cdialog', 'xdialog' ]);
+
+my $windowtitle = "Welcome to the Crossfire Server Management Console!";
+my $enjoyedtitle = "We hope you enjoyed using CFMC!";
+my $introtext =
+"This is the Crossfire Server Management Console, a utility for Crossfire Server operators to manage their servers from a text GUI rather than the command line.";
+
+$d->msgbox( title => $windowtitle, text => $introtext );
+
+if (($d->state() eq "ESC") || ($d->state() eq "CANCEL"))
+{
+	exit 0;
+}
+
+my $menuselection = "";
+
+sub CheckServerStatus
+{
+	my $running=`ps ax|grep /usr/sbin/crossfire-server|grep -v grep`;
+	if ($running ne "")
+	{
+		$ServerStatus = "Running";
+	}
+	else
+	{
+		$ServerStatus = "Stopped";
+	}
+
+}
+
+sub MainMenu
+{
+	my $WantRespawn="ON";
+	CheckServerStatus();
+	if (-f "$CROSSFIREDIR/nostart")
+	{
+		$WantRespawn="OFF";
+	}
+
+	$menuselection = $d->menu( title => "Main Menu", text => "Server is $ServerStatus and respawn is $WantRespawn - Select one:",
+                            list => [ '1', 'Server Console',
+                                      '2', 'Turn Off Respawn',
+                                      '3', 'Turn Respawn On',
+                                      '4', 'Edit server.cfg',
+                                      '5', 'Run a Backup',
+                                      '6', 'Reset Crossfire Server',
+                                      'q', 'Quit CFMC' ] );
+}
+
+while (-1)
+{
+	MainMenu();
+	if (($menuselection eq "CANCEL") || ($menuselection eq "ESC") || ($menuselection eq "") || ($menuselection eq "q") || ($menuselection eq "Q"))
+	{
+		$d->msgbox( title => $enjoyedtitle, text => "Thanks for using CFMC..." );
+		exit 0;
+	}
+	elsif ($menuselection eq "1")
+	{
+		$d->msgbox( text => "To exit the Crossfire Server console and return to CFMC press CTRL-A CTRL-D" );
+		system("screen -r Crossfire");
+	}
+	elsif ($menuselection eq "2")
+	{
+		# Turn off respawn
+		system("touch $CROSSFIREDIR/nostart");
+	}
+	elsif ($menuselection eq "3")
+	{
+		# Turn respawn back on
+		if (-f "$CROSSFIREDIR/nostart")
+		{
+			unlink("$CROSSFIREDIR/nostart");
+		}
+	}
+	elsif ($menuselection eq "4")
+	{
+		# Edit server config file
+		system("$FileEditor $CROSSFIREDIR/myconfig.cfg");
+	}
+	elsif ($menuselection eq "5")
+	{
+		# Run a backup
+		system("$BackupCommand");
+	}
+	elsif ($menuselection eq "6")
+	{
+		# Reset Crossfire Server
+		system("$BackupCommand");
+		print "Killing Crossfire process, please wait...\n";
+		system("killall crossfire-server");
+		sleep(5);
+	}
+}
+
+exit 0;
